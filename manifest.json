@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sổ Tiệm - App</title>
+    <!-- Sử dụng TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { overscroll-behavior-y: none; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .hidden-element { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col">
+
+    <!-- ================= MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ ================= -->
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-blue-600">SỔ TIỆM</h1>
+                <p class="text-sm text-gray-500 mt-1">Trợ lý tài chính 3 phút</p>
+            </div>
+
+            <!-- Form -->
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" required placeholder="nhap@email.com" class="w-full p-3 border rounded-lg">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="password" required placeholder="******" class="w-full p-3 border rounded-lg">
+                </div>
+
+                <!-- Các trường chỉ xuất hiện khi ĐĂNG KÝ -->
+                <div id="register-only-fields" class="hidden-element border-t pt-4 mt-2">
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Họ tên</label>
+                        <input type="text" id="fullname" placeholder="Nguyễn Văn A" class="w-full p-3 border rounded-lg">
+                    </div>
+
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Bạn là ai?</label>
+                    <div class="flex gap-4 mb-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="role" value="owner" checked onchange="toggleStoreCode()" class="mr-2"> Chủ quán
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="role" value="staff" onchange="toggleStoreCode()" class="mr-2"> Nhân viên
+                        </label>
+                    </div>
+
+                    <!-- Dành cho Chủ quán -->
+                    <div id="store-info-group" class="mb-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Tên quán</label>
+                        <input type="text" id="store-name" placeholder="Ví dụ: Quán Ăn An Nhiên" class="w-full p-3 border rounded-lg">
+                    </div>
+
+                    <!-- Dành cho Nhân viên -->
+                    <div id="store-code-group" class="hidden-element mb-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Mã quán (Do chủ quán cấp)</label>
+                        <input type="text" id="store-code" placeholder="Ví dụ: T01" class="w-full p-3 border rounded-lg">
+                    </div>
+                </div>
+
+                <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold shadow hover:bg-blue-700">Đăng Nhập</button>
+            </form>
+
+            <div class="text-center mt-4 text-sm text-gray-600">
+                <span id="auth-switch-text">Chưa có tài khoản?</span> 
+                <button type="button" onclick="toggleAuthMode()" class="text-blue-600 font-bold ml-1">Đăng ký ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MÀN HÌNH ỨNG DỤNG ================= -->
+    <div id="app-screen" class="hidden-element h-screen flex-col">
+        
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10 relative">
+            <div>
+                <h1 class="text-xl font-bold">SỔ TIỆM</h1>
+                <p id="user-info-display" class="text-xs text-blue-200">Chào, Khách</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="store-display" class="text-sm bg-blue-800 px-2 py-1 rounded font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">Mã: ...</span>
+                <button onclick="logout()" class="text-sm border border-white px-2 py-1 rounded hover:bg-white hover:text-blue-600">Thoát</button>
+            </div>
+        </header>
+
+        <!-- Top Navigation Bar -->
+        <nav class="bg-white border-b border-gray-200 w-full flex justify-around p-2 shadow-sm z-10 relative">
+            <button onclick="switchTab('tab-home')" class="nav-btn text-blue-600 p-2 border-b-2 border-blue-600 font-bold">
+                Trang chủ
+            </button>
+            <button onclick="switchTab('tab-thuchi')" class="nav-btn text-gray-500 p-2 border-b-2 border-transparent font-bold">
+                Thu Chi
+            </button>
+            <button onclick="switchTab('tab-kho')" class="nav-btn text-gray-500 p-2 border-b-2 border-transparent font-bold">
+                Kho Hàng
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 bg-gray-100">
+            
+            <!-- TRANG CHỦ -->
+            <div id="tab-home" class="tab-content active">
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-sm">
+                    <p class="font-bold">Cảnh báo tồn kho!</p>
+                    <p class="text-sm">Bia Tiger chỉ còn 2 thùng. (Đã thông báo qua email)</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                    <h2 class="text-gray-500 text-sm">Doanh thu hôm nay</h2>
+                    <p class="text-3xl font-bold text-blue-600">4,180,000 đ</p>
+                    <p class="text-xs text-gray-400 mt-2">Chưa chốt sổ tiền mặt</p>
+                </div>
+                
+                <button class="w-full bg-green-500 text-white p-3 rounded-lg font-bold shadow-md active:bg-green-600">
+                    Thực hiện chốt sổ 3 phút
+                </button>
+            </div>
+
+            <!-- THU CHI -->
+            <div id="tab-thuchi" class="tab-content">
+                <h2 class="text-lg font-bold mb-4">Ghi nhanh khoản chi</h2>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <input type="number" placeholder="Nhập số tiền (VNĐ)..." class="w-full p-3 border rounded-lg mb-4 text-lg">
+                    <input type="text" placeholder="Lý do chi..." class="w-full p-3 border rounded-lg mb-4">
+                    
+                    <label class="block w-full bg-gray-100 border-2 border-dashed border-gray-300 text-center p-6 rounded-lg cursor-pointer mb-4">
+                        <span class="text-gray-500 font-bold block mb-2">📸 Chụp ảnh chứng từ</span>
+                        <input type="file" accept="image/*" capture="environment" class="hidden">
+                    </label>
+                    <button class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">Lưu khoản chi</button>
+                </div>
+            </div>
+
+            <!-- KHO HÀNG -->
+            <div id="tab-kho" class="tab-content">
+                <h2 class="text-lg font-bold mb-4">Nhập kho nhanh bằng giọng nói</h2>
+                <div class="bg-white p-6 rounded-lg shadow-sm text-center">
+                    <button id="btn-voice" class="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto shadow-inner active:bg-blue-300">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-2a5 5 0 01-10 0H3a7.001 7.001 0 006 6.93V17H6v2h8v-2h-3v-2.07z" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <p id="voice-result" class="mt-4 text-lg font-bold text-gray-700">...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Javascript -->
+    <script>
+        let isRegisterMode = false;
+
+        // --- XỬ LÝ CHUYỂN ĐỔI FORM ĐĂNG NHẬP / ĐĂNG KÝ ---
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const switchText = document.getElementById('auth-switch-text');
+            const registerOnlyFields = document.getElementById('register-only-fields');
+            
+            if (isRegisterMode) {
+                submitBtn.innerText = "Tạo tài khoản";
+                switchText.innerText = "Đã có tài khoản?";
+                event.target.innerText = "Đăng nhập";
+                registerOnlyFields.classList.remove('hidden-element');
+                
+                // Bắt buộc nhập Họ tên khi đăng ký
+                document.getElementById('fullname').setAttribute('required', 'true');
+                toggleStoreCode(); 
+            } else {
+                submitBtn.innerText = "Đăng Nhập";
+                switchText.innerText = "Chưa có tài khoản?";
+                event.target.innerText = "Đăng ký ngay";
+                registerOnlyFields.classList.add('hidden-element');
+                
+                // Bỏ bắt buộc nhập khi ở màn hình đăng nhập
+                document.getElementById('fullname').removeAttribute('required');
+                document.getElementById('store-name').removeAttribute('required');
+                document.getElementById('store-code').removeAttribute('required');
+            }
+        }
+
+        // --- ẨN/HIỆN THÔNG TIN THEO VAI TRÒ ---
+        function toggleStoreCode() {
+            if (!isRegisterMode) return;
+
+            const role = document.querySelector('input[name="role"]:checked').value;
+            const storeCodeGroup = document.getElementById('store-code-group');
+            const storeCodeInput = document.getElementById('store-code');
+            const storeInfoGroup = document.getElementById('store-info-group');
+            const storeNameInput = document.getElementById('store-name');
+
+            if (role === 'staff') {
+                // Nhân viên: Cần Mã quán, Không cần Tên quán
+                storeCodeGroup.classList.remove('hidden-element');
+                storeCodeInput.setAttribute('required', 'true');
+                
+                storeInfoGroup.classList.add('hidden-element');
+                storeNameInput.removeAttribute('required');
+            } else {
+                // Chủ quán: Không cần Mã quán (tự sinh), Cần Tên quán
+                storeCodeGroup.classList.add('hidden-element');
+                storeCodeInput.removeAttribute('required');
+
+                storeInfoGroup.classList.remove('hidden-element');
+                storeNameInput.setAttribute('required', 'true');
+            }
+        }
+
+        // --- XỬ LÝ ĐĂNG NHẬP & LƯU LOCALSTORAGE ---
+        function handleAuth(event) {
+            event.preventDefault(); 
+
+            const email = document.getElementById('email').value;
+            let fullname = "";
+            let role = 'owner';
+            let storeCode = '';
+            let storeName = '';
+
+            if (isRegisterMode) {
+                fullname = document.getElementById('fullname').value;
+                role = document.querySelector('input[name="role"]:checked').value;
+                
+                if (role === 'staff') {
+                    storeCode = document.getElementById('store-code').value;
+                    storeName = "Quán " + storeCode; // Tạm giả lập tên quán
+                } else {
+                    storeName = document.getElementById('store-name').value;
+                    storeCode = "T-" + Math.floor(Math.random() * 1000); // Tự tạo mã ngẫu nhiên cho chủ quán
+                }
+            } else {
+                // Giả lập dữ liệu khi người dùng ấn Đăng nhập (Vì chưa có Backend thật)
+                fullname = "Người Dùng";
+                role = "owner";
+                storeCode = "T01"; 
+                storeName = "Quán Demo";
+            }
+
+            // Lưu dữ liệu vào localStorage
+            const userData = { email, fullname, role, storeCode, storeName, isLoggedIn: true };
+            localStorage.setItem('sotiem_user', JSON.stringify(userData));
+
+            loadApp(userData);
+        }
+
+        // --- KIỂM TRA ĐĂNG NHẬP KHI MỞ APP ---
+        window.onload = function() {
+            const savedUser = localStorage.getItem('sotiem_user');
+            if (savedUser) {
+                loadApp(JSON.parse(savedUser));
+            }
+        };
+
+        function loadApp(userData) {
+            document.getElementById('auth-screen').classList.add('hidden-element');
+            
+            const appScreen = document.getElementById('app-screen');
+            appScreen.classList.remove('hidden-element');
+            appScreen.style.display = 'flex'; 
+
+            // Cập nhật hiển thị tên và vai trò
+            const roleText = userData.role === 'owner' ? " (Chủ quán)" : " (Nhân viên)";
+            document.getElementById('user-info-display').innerText = "Chào, " + userData.fullname + roleText;
+            
+            // Cập nhật góc phải hiển thị Tên quán và Mã
+            if(userData.role === 'owner') {
+                document.getElementById('store-display').innerText = userData.storeName + " (Mã: " + userData.storeCode + ")";
+            } else {
+                document.getElementById('store-display').innerText = "Mã: " + userData.storeCode;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('sotiem_user');
+            
+            const appScreen = document.getElementById('app-screen');
+            appScreen.classList.add('hidden-element');
+            appScreen.style.display = ''; 
+            
+            document.getElementById('auth-screen').classList.remove('hidden-element');
+            
+            document.getElementById('auth-form').reset();
+            if(isRegisterMode) toggleAuthMode(); 
+        }
+
+        // --- CHUYỂN TAB TOP NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-blue-600');
+                btn.classList.add('text-gray-500', 'border-transparent');
+            });
+            
+            event.currentTarget.classList.remove('text-gray-500', 'border-transparent');
+            event.currentTarget.classList.add('text-blue-600', 'border-blue-600');
+        }
+
+        // --- GIỌNG NÓI ---
+        const btnVoice = document.getElementById('btn-voice');
+        const voiceResult = document.getElementById('voice-result');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'vi-VN';
+            recognition.interimResults = false;
+
+            btnVoice.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                recognition.start();
+                voiceResult.innerText = "Đang nghe...";
+            });
+            btnVoice.addEventListener('mousedown', () => {
+                recognition.start();
+                voiceResult.innerText = "Đang nghe...";
+            });
+            recognition.onresult = (event) => {
+                voiceResult.innerText = `Đã nhận: "${event.results[0][0].transcript}"`;
+            };
+        }
+    </script>
+</body>
+</html>
