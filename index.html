@@ -198,7 +198,7 @@
                             <button onclick="toggleItemForm()" class="bg-green-100 hover:bg-green-200 active:scale-95 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-all flex items-center">+ Thêm món</button>
                         </div>
                     </div>
-                    <div id="voice-status" class="hidden-element text-center p-2 mb-3 bg-red-50 text-red-600 font-bold text-xs rounded-lg border border-red-200 mic-pulsing">🔴 Đang nghe bạn nói... Hãy đọc rõ cú pháp!</div>
+                    <div id="voice-status" class="hidden-element text-center p-2 mb-3 bg-red-50 text-red-600 font-bold text-xs rounded-lg border border-red-200 mic-pulsing">🔴 Đang nghe bạn nói... Không cần đúng cú pháp!</div>
                     <div id="item-form" class="hidden-element bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 space-y-2">
                         <input type="hidden" id="item-id">
                         <input type="text" id="item-name" placeholder="Tên mặt hàng (VD: Ly giấy, Cà phê)..." class="w-full p-2 border rounded-md text-xs focus:outline-none focus:border-blue-500">
@@ -228,6 +228,30 @@
     
     <div id="edit-modal" class="hidden-element fixed inset-0 z-50 flex items-center justify-center modal p-4">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"><h2 class="font-black text-red-600 text-sm mb-4 border-b pb-2 uppercase tracking-wider">Sửa Dữ Liệu Giao Dịch</h2><input type="hidden" id="edit-tx-id"><label class="block text-[11px] font-bold text-gray-600 mb-1">Mô tả khoản thu/chi:</label><input type="text" id="edit-desc" class="w-full p-2.5 border rounded-lg mb-3 text-xs focus:outline-none focus:border-red-500"><label class="block text-[11px] font-bold text-gray-600 mb-1">Số tiền (đ):</label><input type="number" id="edit-amount" class="w-full p-2.5 border rounded-lg mb-5 text-xs font-bold focus:outline-none focus:border-red-500"><div class="flex gap-2"><button onclick="submitEditTransaction()" class="flex-1 bg-red-600 hover:bg-red-700 active:scale-95 text-white p-2.5 rounded-xl font-bold text-xs transition-all">Lưu Cập Nhật</button><button onclick="closeModal('edit-modal')" class="px-4 bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-800 p-2.5 rounded-xl font-bold text-xs transition-all">Hủy</button></div></div>
+    </div>
+
+    <!-- MODAL SỬA MÓN HÀNG -->
+    <div id="edit-item-modal" class="hidden-element fixed inset-0 z-50 flex items-center justify-center modal p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h2 class="font-black text-blue-600 text-sm mb-4 border-b pb-2 uppercase tracking-wider">Sửa Thông Tin Món Hàng</h2>
+            <input type="hidden" id="edit-item-id">
+            <label class="block text-[11px] font-bold text-gray-600 mb-1">Tên mặt hàng:</label>
+            <input type="text" id="edit-item-name" class="w-full p-2.5 border rounded-lg mb-3 text-xs focus:outline-none focus:border-blue-500">
+            <div class="flex gap-2 mb-5">
+                <div class="w-1/2">
+                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Tồn kho hiện tại:</label>
+                    <input type="number" id="edit-item-qty" class="w-full p-2.5 border rounded-lg text-xs font-bold focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-[11px] font-bold text-gray-600 mb-1">Mức cảnh báo:</label>
+                    <input type="number" id="edit-item-min" class="w-full p-2.5 border rounded-lg text-xs font-bold border-orange-300 focus:outline-none focus:border-orange-500">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="submitEditItem()" class="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white p-2.5 rounded-xl font-bold text-xs transition-all">Lưu Cập Nhật</button>
+                <button onclick="closeModal('edit-item-modal')" class="px-4 bg-gray-200 hover:bg-gray-300 active:scale-95 text-gray-800 p-2.5 rounded-xl font-bold text-xs transition-all">Hủy</button>
+            </div>
+        </div>
     </div>
 
     <!-- ================= SCRIPT XỬ LÝ CHÍNH ================= -->
@@ -465,7 +489,7 @@
         
         function logout() { localStorage.removeItem('sotiem_user_session'); location.reload(); }
         
-        // ================= QUẢN LÝ NHÂN VIÊN (ĐÃ SỬA HOÀN TOÀN LỖI XÓA) =================
+        // ================= QUẢN LÝ NHÂN VIÊN =================
         function renderEmployees() {
             const list = document.getElementById('employee-list'); if(!list) return; list.innerHTML = "";
             if (employees.length === 0) { list.innerHTML = "<p class='text-xs text-gray-400 py-2'>Chưa có nhân viên nào trong danh sách.</p>"; return; }
@@ -555,7 +579,7 @@
             if(fileInput && fileInput.files.length > 0) { document.getElementById(labelId).innerText = "✅ Đã chọn: " + fileInput.files[0].name; }
         }
 
-        // ================= GIAO DỊCH (ĐÃ THÊM CHỐNG BẤM ĐÚP) =================
+        // ================= GIAO DỊCH =================
         function saveTransaction(type) {
             if(isSavingTx) return; // Nếu đang xử lý lưu thì chặn lại ngay
             
@@ -743,7 +767,7 @@
         function goToReviewTransactions() { closeModal('chot-so-modal'); switchTab('tab-thuchi', 'thuchi'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden-element'); }
         
-        // ================= KHO HÀNG & TIÊU THỤ (ĐÃ GỘP MÓN TRÙNG TÊN) =================
+        // ================= KHO HÀNG & TIÊU THỤ =================
         function renderConsumptionList() {
             const list = document.getElementById('consumption-list'); if(!list) return; list.innerHTML = "";
             if(inventory.length === 0) { list.innerHTML = "<p class='text-xs text-gray-400 text-center py-4'>Kho hàng đang trống.</p>"; return; }
@@ -775,7 +799,11 @@
         function renderInventory() {
             const list = document.getElementById('inventory-list'); if(!list) return; list.innerHTML = "";
             if (inventory.length === 0) { list.innerHTML = "<p class='text-center text-gray-400 py-4'>Kho chưa có mặt hàng nào.</p>"; return; }
-            inventory.forEach(item => { const isLow = item.qty <= item.min; list.innerHTML += `<li class="py-2.5 flex justify-between items-center"><div class="flex-1"><p class="font-bold text-gray-800 ${isLow?'text-red-600':''}">${item.name}</p><p class="text-[11px] text-gray-400 font-medium">Tồn: <span class="font-bold text-gray-700">${item.qty}</span> | Cảnh báo khi <= <span class="text-orange-500 font-bold">${item.min}</span></p></div></li>`; });
+            inventory.forEach(item => { 
+                const isLow = item.qty <= item.min; 
+                let actionBtns = isTrustedUser ? `<button onclick="openEditItem(${item.id})" class="text-blue-500 hover:text-blue-700 font-bold text-[10px] ml-2 underline">Sửa</button> <button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700 font-bold text-[10px] ml-2 underline">Xóa</button>` : '';
+                list.innerHTML += `<li class="py-2.5 flex justify-between items-center"><div class="flex-1"><p class="font-bold text-gray-800 ${isLow?'text-red-600':''}">${item.name} ${actionBtns}</p><p class="text-[11px] text-gray-400 font-medium">Tồn: <span class="font-bold text-gray-700">${item.qty}</span> | Cảnh báo khi <= <span class="text-orange-500 font-bold">${item.min}</span></p></div></li>`; 
+            });
         }
         
         function renderRestockDropdown() {
@@ -797,7 +825,6 @@
             const name = nameInput.value.trim(); const qty = parseInt(qtyInput.value); const min = parseInt(minInput.value);
             if(!name || isNaN(qty) || isNaN(min)) return alert("Vui lòng nhập đầy đủ tên, số lượng hiện tại và số lượng cảnh báo!");
             
-            // Kiểm tra món trùng tên để cộng dồn thay vì tạo dòng mới
             const existingItem = inventory.find(i => i.name.trim().toLowerCase() === name.toLowerCase());
             if(existingItem) {
                 existingItem.qty += qty;
@@ -812,52 +839,138 @@
             saveAppData(); toggleItemForm(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); 
         }
 
-        // ================= GIỌNG NÓI =================
-        function voiceNewItem() { if(confirm("🎙 Hãy chuẩn bị nói theo cú pháp:\nVD: Tên hàng ly nhựa, số lượng 100, mức cảnh báo 20\n\nBấm OK để bắt đầu nói!")) { startVoiceInput(1); } }
-        function voiceRestock() { if(confirm("🎙 Hãy chuẩn bị nói theo cú pháp:\nVD: Tên hàng ly nhựa, mua thêm 50\n\nBấm OK để bắt đầu nói!")) { startVoiceInput(2); } }
+        function openEditItem(id) {
+            const item = inventory.find(i => i.id === id); if(!item) return;
+            document.getElementById('edit-item-id').value = item.id; 
+            document.getElementById('edit-item-name').value = item.name; 
+            document.getElementById('edit-item-qty').value = item.qty;
+            document.getElementById('edit-item-min').value = item.min;
+            document.getElementById('edit-item-modal').classList.remove('hidden-element');
+        }
+
+        function submitEditItem() {
+            const id = parseInt(document.getElementById('edit-item-id').value); 
+            const newName = document.getElementById('edit-item-name').value.trim(); 
+            const newQty = parseInt(document.getElementById('edit-item-qty').value);
+            const newMin = parseInt(document.getElementById('edit-item-min').value);
+            
+            if(!newName || isNaN(newQty) || isNaN(newMin)) return alert("Vui lòng nhập đủ thông tin!");
+            
+            const item = inventory.find(i => i.id === id);
+            if(item) {
+                const conflict = inventory.find(i => i.id !== id && i.name.trim().toLowerCase() === newName.toLowerCase());
+                if(conflict) return alert(`❌ Món "${newName}" đã tồn tại trong kho. Vui lòng chọn tên khác để không bị trùng!`);
+                
+                item.name = newName.charAt(0).toUpperCase() + newName.slice(1); 
+                item.qty = newQty; 
+                item.min = newMin; 
+                saveAppData(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); closeModal('edit-item-modal'); 
+                alert("✅ Đã cập nhật thông tin món hàng thành công!");
+            }
+        }
+        
+        function deleteItem(id) {
+            if(confirm("Bạn có chắc chắn muốn xóa mặt hàng này khỏi kho không? (Lưu ý: Thao tác này không thể hoàn tác)")) {
+                inventory = inventory.filter(i => i.id !== id);
+                saveAppData(); 
+                renderInventory(); 
+                renderRestockDropdown(); 
+                renderConsumptionList(); 
+            }
+        }
+
+        // ================= GIỌNG NÓI TỰ NHIÊN (NLP) =================
+        function voiceNewItem() { 
+            if(confirm("🎙 Cứ nói tự nhiên không cần đúng cú pháp!\nVD: 'Thêm ly nhựa 100 cảnh báo 20' hoặc 'Ly nhựa 100'\n\nBấm OK để nói!")) { 
+                startVoiceInput(1); 
+            } 
+        }
+        
+        function voiceRestock() { 
+            if(confirm("🎙 Cứ nói tự nhiên!\nVD: 'Mua thêm ly nhựa 50' hoặc 'Nhập ly nhựa 50'\n\nBấm OK để nói!")) { 
+                startVoiceInput(2); 
+            } 
+        }
 
         function startVoiceInput(mode) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; 
             if (!SpeechRecognition) return alert("❌ Trình duyệt hoặc điện thoại của bạn chưa hỗ trợ nhận diện giọng nói!");
-            const recognition = new SpeechRecognition(); recognition.lang = 'vi-VN'; const voiceStatus = document.getElementById('voice-status');
+            const recognition = new SpeechRecognition(); 
+            recognition.lang = 'vi-VN'; 
+            const voiceStatus = document.getElementById('voice-status');
             
             recognition.onstart = function() { voiceStatus.classList.remove('hidden-element'); };
-            recognition.onresult = function(event) { const text = event.results[0][0].transcript.toLowerCase(); if(mode === 1) processVoiceNew(text); else processVoiceRestock(text); };
-            recognition.onerror = function(event) { voiceStatus.classList.add('hidden-element'); alert("❌ Không nghe rõ hoặc lỗi mic (" + event.error + "). Vui lòng thử lại!"); }; 
+            recognition.onresult = function(event) { 
+                const text = event.results[0][0].transcript.toLowerCase(); 
+                if(mode === 1) processVoiceNew(text); else processVoiceRestock(text); 
+            };
+            recognition.onerror = function(event) { 
+                voiceStatus.classList.add('hidden-element'); 
+                alert("❌ Không nghe rõ hoặc lỗi mic (" + event.error + "). Vui lòng thử lại!"); 
+            }; 
             recognition.onend = function() { voiceStatus.classList.add('hidden-element'); }; 
+            
             try { recognition.start(); } catch(e) { voiceStatus.classList.add('hidden-element'); }
         }
 
         function processVoiceNew(text) {
-            let t = text.replace(/[:,\.]/g, ''); let iName = t.indexOf("tên hàng"); let iQty = t.indexOf("số lượng"); let iMin = t.indexOf("mức cảnh báo") > -1 ? t.indexOf("mức cảnh báo") : t.indexOf("cảnh báo");
-            if(iName > -1 && iQty > -1 && iMin > -1) {
-                let name = t.substring(iName + 8, iQty).trim(); name = name.charAt(0).toUpperCase() + name.slice(1);
-                let qtyStr = t.substring(iQty + 8, iMin).trim().match(/\d+/); let minStr = t.substring(iMin + 8).trim().match(/\d+/);
-                if(name && qtyStr && minStr) {
-                    const existingItem = inventory.find(i => i.name.trim().toLowerCase() === name.toLowerCase());
-                    if(existingItem) {
-                        existingItem.qty += parseInt(qtyStr[0]);
-                        existingItem.min = parseInt(minStr[0]);
-                        alert(`✅ Món "${existingItem.name}" đã có sẵn. Đã tự động cộng dồn số lượng!`);
-                    } else {
-                        inventory.push({ id: Date.now(), name: name, qty: parseInt(qtyStr[0]), min: parseInt(minStr[0]) });
-                        alert(`✅ Tạo thành công bằng giọng nói: ${name} (SL: ${qtyStr[0]}, Min: ${minStr[0]})`);
-                    }
-                    saveAppData(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); return;
+            let numbers = text.match(/\d+/g);
+            let qty = numbers && numbers.length > 0 ? parseInt(numbers[0]) : 1; 
+            let min = numbers && numbers.length > 1 ? parseInt(numbers[1]) : 5; 
+
+            let nameRaw = text.replace(/\d+/g, '') 
+                              .replace(/(tên hàng|số lượng|mức cảnh báo|cảnh báo|nhập|thêm|mới|món|là|có|khoảng)/gi, '') 
+                              .replace(/[:,\.]/g, '') 
+                              .trim();
+                              
+            let name = nameRaw.replace(/\s+/g, ' ');
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+
+            if (name.length > 0) {
+                const existingItem = inventory.find(i => i.name.trim().toLowerCase() === name.toLowerCase());
+                if(existingItem) {
+                    existingItem.qty += qty;
+                    existingItem.min = min;
+                    alert(`✅ Món "${existingItem.name}" đã có sẵn. Đã tự động cộng dồn số lượng!`);
+                } else {
+                    inventory.push({ id: Date.now(), name: name, qty: qty, min: min });
+                    alert(`✅ Tạo thành công bằng giọng nói: ${name} (SL: ${qty}, Min: ${min})`);
                 }
-            } alert("❌ Không nhận diện đúng cú pháp. Bạn vừa đọc là: \"" + text + "\". Hãy đọc lại đúng mẫu nhé!");
+                saveAppData(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); 
+            } else {
+                alert("❌ Không nghe rõ tên món hàng. Bạn vừa đọc: \"" + text + "\"");
+            }
         }
 
         function processVoiceRestock(text) {
-            let t = text.replace(/[:,\.]/g, ''); let iName = t.indexOf("tên hàng"); let iAdd = t.indexOf("mua thêm") > -1 ? t.indexOf("mua thêm") : (t.indexOf("nhập thêm") > -1 ? t.indexOf("nhập thêm") : t.indexOf("cộng thêm"));
-            if (iName > -1 && iAdd > -1) {
-                let name = t.substring(iName + 8, iAdd).trim(); let qtyStr = t.substring(iAdd + 8).match(/\d+/);
-                if(name && qtyStr) {
-                    const addQty = parseInt(qtyStr[0]); let item = inventory.find(i => i.name.toLowerCase().includes(name) || name.includes(i.name.toLowerCase()));
-                    if(item) { item.qty += addQty; saveAppData(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); alert(`✅ Đã nhập thêm ${addQty} cho món "${item.name}". Tồn mới: ${item.qty}`); return; } 
-                    else return alert(`❌ Không tìm thấy món nào giống chữ "${name}" trong kho.`);
+            let numbers = text.match(/\d+/g);
+            let addQty = numbers && numbers.length > 0 ? parseInt(numbers[0]) : 1;
+
+            let nameRaw = text.replace(/\d+/g, '') 
+                              .replace(/(tên hàng|mua thêm|nhập thêm|cộng thêm|nhập|mua|cộng|thêm|vào|món|là)/gi, '')
+                              .replace(/[:,\.]/g, '')
+                              .trim()
+                              .replace(/\s+/g, ' ');
+            let name = nameRaw.toLowerCase();
+
+            if (name.length > 0) {
+                let item = inventory.find(i => i.name.toLowerCase().includes(name) || name.includes(i.name.toLowerCase()));
+                
+                if (!item) {
+                    let words = name.split(' ');
+                    item = inventory.find(i => words.some(w => w.length > 2 && i.name.toLowerCase().includes(w)));
                 }
-            } alert("❌ Không nhận diện đúng cú pháp. Bạn vừa đọc là: \"" + text + "\". Hãy đọc lại đúng mẫu nhé!");
+
+                if(item) { 
+                    item.qty += addQty; 
+                    saveAppData(); renderInventory(); renderRestockDropdown(); renderConsumptionList(); 
+                    alert(`✅ Đã nhập thêm ${addQty} cho món "${item.name}". Tồn mới: ${item.qty}`); 
+                } else {
+                    alert(`❌ Không tìm thấy món nào giống chữ "${name}" trong kho. Bạn vừa đọc: "${text}"`);
+                }
+            } else {
+                alert("❌ Không nghe rõ tên món hàng cần nhập. Bạn vừa đọc: \"" + text + "\"");
+            }
         }
     </script>
 </body>
